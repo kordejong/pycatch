@@ -1,5 +1,7 @@
-import pcraster as pcr
-import pcraster.framework as pcrfw
+### import pcraster as pcr
+### import pcraster.framework as pcrfw
+import modelling_framework
+pcr, pcrfw = modelling_framework.load("lue")
 import scipy.stats
 
 import numpy
@@ -43,6 +45,7 @@ def getCellValue(Map, Row, Column):
     print('missing value in input of getCellValue')
 
 def printErrorMessageIfACellContainsTrue(booleanMap, errorMessage):
+  return  # KDJ
   scalarMap = pcr.cover(pcr.scalar(booleanMap), 0)
   cellContainsTrueMap = pcr.boolean(pcr.mapmaximum(scalarMap))
   cellContainsTrue = getCellValue(cellContainsTrueMap, 1, 1)

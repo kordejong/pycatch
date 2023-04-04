@@ -10,11 +10,13 @@ sys.path.append("./pcrasterModules/")
 import configuration as cfg
 
 # PCRaster itself
-import pcraster as pcr
-import pcraster.framework as pcrfw
+# import pcraster as pcr
+import modelling_framework
+pcr, pcrfw = modelling_framework.load("lue")
 
 
-# from pcrasterModules
+
+### # from pcrasterModules
 import datetimePCRasterPython
 import interceptionuptomaxstore
 import surfacestore
@@ -22,8 +24,8 @@ import infiltrationgreenandampt
 import subsurfacewateronelayer
 import evapotranspirationpenman
 import runoffaccuthreshold
-import shading
-import generalfunctions
+### import shading
+### import generalfunctions
 import randomparameters
 
 # from this folder
@@ -52,13 +54,14 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
     self.createInstancesPremcloop()
 
     # required for reporting as numpy
-    self.locations = pcr.cover(pcr.nominal(cfg.locations), 0)
-    pcr.report(self.locations, 'locats')
+    ### TODO KDJ
+    ### self.locations = pcr.cover(pcr.nominal(cfg.locations), 0)
+    ### pcr.report(self.locations, 'locats')
 
-    self.forestNoForest = pcr.boolean(cfg.forestNoForest)
-    idMap = pcr.uniqueid(self.clone)
-    oneLocationPerArea = pcr.areamaximum(idMap, pcr.spatial(self.forestNoForest)) == idMap
-    self.locationsForParameters = pcr.cover(pcr.nominal(pcr.scalar(pcr.ifthen(oneLocationPerArea, self.forestNoForest)) + 1), 0)
+    ### self.forestNoForest = pcr.boolean(cfg.forestNoForest)
+    ### idMap = pcr.uniqueid(self.clone)
+    ### oneLocationPerArea = pcr.areamaximum(idMap, pcr.spatial(self.forestNoForest)) == idMap
+    ### self.locationsForParameters = pcr.cover(pcr.nominal(pcr.scalar(pcr.ifthen(oneLocationPerArea, self.forestNoForest)) + 1), 0)
     # end required for reporting as numpy
 
   def initial(self):
@@ -80,7 +83,7 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
 
     # precipitation
     # for calibration
-    rainfallFluxDeterm = pcr.timeinputscalar(cfg.rainfallFluxDetermTimeSeries, pcr.nominal(cfg.rainfallFluxDetermTimeSeriesAreas))
+    rainfallFluxDeterm = pcr.timeinputscalar(cfg.rainfallFluxDetermTimeSeries, pcr.nominal(cfg.rainfallFluxDetermTimeSeriesAreas), self.currentTimeStep())
     # for the experiments
     rainfallFlux = rainfallFluxDeterm #generalfunctions.mapNormalRelativeError(rainfallFluxDeterm,0.25)
     self.d_exchangevariables.cumulativePrecipitation = \
@@ -132,19 +135,19 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
     fWaterPotential = self.d_subsurfaceWaterOneLayer.getFWaterPotential()
 
     # potential evapotranspiration
-    airTemperatureDeterm = pcr.timeinputscalar(cfg.airTemperatureDetermString, self.clone)
+    airTemperatureDeterm = pcr.timeinputscalar(cfg.airTemperatureDetermString, self.clone, self.currentTimeStep())
     airTemperature = airTemperatureDeterm #airTemperatureDeterm+mapnormal()
 
-    relativeHumidityDeterm = pcr.timeinputscalar(cfg.relativeHumidityDetermString, self.clone)
+    relativeHumidityDeterm = pcr.timeinputscalar(cfg.relativeHumidityDetermString, self.clone, self.currentTimeStep())
     relativeHumidity = relativeHumidityDeterm #pcr.max(pcr.min(relativeHumidityDeterm+mapnormal()*0.1,pcr.scalar(1.0)),pcr.scalar(0))
 
-    incomingShortwaveRadiationFlatSurface = pcr.timeinputscalar(cfg.incomingShortwaveRadiationFlatSurfaceString, self.clone)
+    incomingShortwaveRadiationFlatSurface = pcr.timeinputscalar(cfg.incomingShortwaveRadiationFlatSurfaceString, self.clone, self.currentTimeStep())
     # incomingShortwaveRadiationFlatSurface = pcr.max(pcr.scalar(0),
     #                              generalfunctions.mapNormalRelativeError(incomingShortwaveRadiationFlatSurfaceDeterm,0.25))
 
     incomingShortwaveRadiationAtSurface = incomingShortwaveRadiationFlatSurface * fractionReceived
 
-    windVelocityDeterm = pcr.timeinputscalar(cfg.windVelocityDetermString, self.clone)
+    windVelocityDeterm = pcr.timeinputscalar(cfg.windVelocityDetermString, self.clone, self.currentTimeStep())
     windVelocity = windVelocityDeterm #generalfunctions.mapNormalRelativeError(windVelocityDeterm,0.25)
 
     elevationAboveSeaLevelOfMeteoStation = cfg.elevationAboveSeaLevelOfMeteoStationValue
@@ -197,6 +200,9 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
       self.reportComponentsDynamicAsNumpy()
 
     #self.checkBudgets(self.currentSampleNumber(), self.currentTimeStep())
+    # print(f"{self.currentTimeStep()}: {pcr.memory_usage()}")
+    return self.d_exchangevariables.upwardSeepageFlux.future()
+
 
   def postmcloop(self):
     # required for reporting as numpy
@@ -477,7 +483,9 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
       generalfunctions.printMemberVariables(component)
 
   def printComponentsDynamic(self):
-    self.d_dateTimePCRasterPython.printit()
+    pass
+    # KDJ
+    # self.d_dateTimePCRasterPython.printit()
 
   def initializeTime(self, startTimeYear, startTimeMonth, startTimeDay, timeStepDurationHours):
     startTime = datetime.datetime(year=startTimeYear, month=startTimeMonth, day=startTimeDay)
@@ -619,8 +627,37 @@ if cfg.filtering:
   pfModel.run()
 
 else:
-  myModel = CatchmentModel()
-  dynamicModel = pcrfw.DynamicFramework(myModel, cfg.numberOfTimeSteps)
-  mcModel = pcrfw.MonteCarloFramework(dynamicModel, cfg.nrOfSamples)
-  mcModel.setForkSamples(True, 10)
-  mcModel.run()
+  import docopt
+
+  usage = """\
+Execute PyCatch model
+
+Usage:
+    {command} [--pcraster]
+    {command} --lue
+
+Options:
+    --pcraster  Use PCRaster framework (default)
+    --lue       Use LUE framework
+    --help      Show this screen
+
+If no framework is selected, PCRaster is used.
+""".format(
+    command = os.path.basename(sys.argv[0]))
+
+  argv = [arg for arg in sys.argv[1:] if not arg.startswith("--hpx")]
+  arguments = docopt.docopt(usage, argv)
+
+  ### frameworkName = "lue" if arguments["--lue"] else "pcraster"
+
+  ### pcr = modelling_framework.load(frameworkName)
+
+  def create_and_run_model(numberOfTimeSteps, nrOfSamples):
+    myModel = CatchmentModel()
+    dynamicModel = pcrfw.DynamicFramework(myModel, numberOfTimeSteps)
+
+    mcModel = pcrfw.MonteCarloFramework(dynamicModel, nrOfSamples)
+    mcModel.setForkSamples(True, 10)
+    mcModel.run(rate_limit=10)
+
+  pcr.run_model(create_and_run_model, cfg.numberOfTimeSteps, cfg.nrOfSamples)

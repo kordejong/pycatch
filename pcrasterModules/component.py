@@ -1,5 +1,7 @@
-import pcraster as pcr
-import pcraster.framework as pcrfw
+# import pcraster as pcr
+# import pcraster.framework as pcrfw
+import modelling_framework
+pcr, pcrfw = modelling_framework.load("lue")
 
 class Component:
   def __init__(self):

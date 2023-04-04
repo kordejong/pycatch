@@ -1,5 +1,7 @@
-from PCRaster import *
-from PCRaster.Framework import *
+# from PCRaster import *
+# from PCRaster.Framework import *
+import modelling_framework
+pcr, pcrfw = modelling_framework.load("lue")
 import generalfunctions
 
 

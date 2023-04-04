@@ -60,7 +60,7 @@ setOfVariablesToReport = 'full'
 # setOfVariablesToReport = 'filtering'
 
 
-with_shading = True
+with_shading = False  # KDJ True
 
 if with_shading is False:
   fractionReceivedValue = 1.0

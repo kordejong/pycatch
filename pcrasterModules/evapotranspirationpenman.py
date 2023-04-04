@@ -1,4 +1,6 @@
-import pcraster as pcr
+# import pcraster as pcr
+import modelling_framework
+pcr, pcrfw = modelling_framework.load("lue")
 import component
 
 # Notes:
