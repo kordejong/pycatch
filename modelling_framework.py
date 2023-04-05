@@ -93,12 +93,16 @@ def load(name):
             function(*args)
 
         pcr.run_model = create_and_run_model
+        pcr.partition_shape = (2000, 2000)
 
         def set_clone(pathname):
             raster_dataset = gdal.Open(pathname)
+            assert raster_dataset, f"Could not open {pathname}"
 
             array_shape = raster_dataset.RasterYSize, raster_dataset.RasterXSize
-            partition_shape = (300, 300)  # TODO
+
+            assert pcr.partition_shape is not None, "Assign partition shape to package"
+            partition_shape = pcr.partition_shape
 
             geo_transform = raster_dataset.GetGeoTransform()
             cell_shape = geo_transform[1], -geo_transform[5]

@@ -606,30 +606,47 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
     for filename in glob.glob(str(self.currentSampleNumber()) + '/stateVar/*/*'):
       os.remove(filename)
 
-if cfg.filtering:
-  import generalfunctions
-  myModel = CatchmentModel()
-  dynamicModel = pcrfw.DynamicFramework(myModel, cfg.numberOfTimeSteps)
-  mcModel = pcrfw.MonteCarloFramework(dynamicModel, cfg.nrOfSamples)
-  mcModel.setForkSamples(True, 10)
-  #pfModel = SequentialImportanceResamplingFramework(mcModel)
-  pfModel = pcrfw.ResidualResamplingFramework(mcModel)
-  filterTimestepsNoSelection = range(3750, cfg.numberOfTimeSteps + 1, 25)
-  periodsToExclude = [
-    [2617, 2976],
-    [3649, 3689],
-    [4173, 4416],
-    [4046, 4366],
-    [5281, 6075]
-    ]
-  filterTimesteps = generalfunctions.removePeriodsFromAListOfTimesteps(filterTimestepsNoSelection, periodsToExclude)
-  pfModel.setFilterTimesteps(filterTimesteps)
-  pfModel.run()
 
-else:
-  import docopt
+def pycatch(partition_shape):
+    def create_and_run_model(numberOfTimeSteps, nrOfSamples):
+      myModel = CatchmentModel()
+      dynamicModel = pcrfw.DynamicFramework(myModel, numberOfTimeSteps)
 
-  usage = """\
+      mcModel = pcrfw.MonteCarloFramework(dynamicModel, nrOfSamples)
+      mcModel.setForkSamples(True, 10)
+      mcModel.run(rate_limit=10)
+
+    # Hack the partition shape in. This is needed by pcr.set_clone.
+    pcr.partition_shape = partition_shape
+
+    pcr.run_model(create_and_run_model, cfg.numberOfTimeSteps, cfg.nrOfSamples)
+
+
+if __name__ == "__main__":
+  if cfg.filtering:
+    import generalfunctions
+    myModel = CatchmentModel()
+    dynamicModel = pcrfw.DynamicFramework(myModel, cfg.numberOfTimeSteps)
+    mcModel = pcrfw.MonteCarloFramework(dynamicModel, cfg.nrOfSamples)
+    mcModel.setForkSamples(True, 10)
+    #pfModel = SequentialImportanceResamplingFramework(mcModel)
+    pfModel = pcrfw.ResidualResamplingFramework(mcModel)
+    filterTimestepsNoSelection = range(3750, cfg.numberOfTimeSteps + 1, 25)
+    periodsToExclude = [
+      [2617, 2976],
+      [3649, 3689],
+      [4173, 4416],
+      [4046, 4366],
+      [5281, 6075]
+      ]
+    filterTimesteps = generalfunctions.removePeriodsFromAListOfTimesteps(filterTimestepsNoSelection, periodsToExclude)
+    pfModel.setFilterTimesteps(filterTimesteps)
+    pfModel.run()
+
+  else:
+    import docopt
+
+    usage = """\
 Execute PyCatch model
 
 Usage:
@@ -643,21 +660,13 @@ Options:
 
 If no framework is selected, PCRaster is used.
 """.format(
-    command = os.path.basename(sys.argv[0]))
+      command = os.path.basename(sys.argv[0]))
 
-  argv = [arg for arg in sys.argv[1:] if not arg.startswith("--hpx")]
-  arguments = docopt.docopt(usage, argv)
+    argv = [arg for arg in sys.argv[1:] if not arg.startswith("--hpx")]
+    arguments = docopt.docopt(usage, argv)
 
-  ### frameworkName = "lue" if arguments["--lue"] else "pcraster"
+    ### frameworkName = "lue" if arguments["--lue"] else "pcraster"
 
-  ### pcr = modelling_framework.load(frameworkName)
+    ### pcr = modelling_framework.load(frameworkName)
 
-  def create_and_run_model(numberOfTimeSteps, nrOfSamples):
-    myModel = CatchmentModel()
-    dynamicModel = pcrfw.DynamicFramework(myModel, numberOfTimeSteps)
-
-    mcModel = pcrfw.MonteCarloFramework(dynamicModel, nrOfSamples)
-    mcModel.setForkSamples(True, 10)
-    mcModel.run(rate_limit=10)
-
-  pcr.run_model(create_and_run_model, cfg.numberOfTimeSteps, cfg.nrOfSamples)
+    pycatch()
