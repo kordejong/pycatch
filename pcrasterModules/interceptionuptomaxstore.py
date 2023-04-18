@@ -98,12 +98,12 @@ class InterceptionUpToMaxStore(component.Component):
   def calculateMaximumAdditionAmount(self):
     """
     """
-    return pcr.max(0, self.maximumStore - self.store)
+    return pcr.max(0.0, self.maximumStore - self.store)
 
   def calculateMaximumAbstractionAmount(self):
     """
     """
-    return pcr.max(0, self.store - 0.0)
+    return pcr.max(0.0, self.store - 0.0)
 
   def gapFractionLoss(self, potentialAdditionFlux):
     """

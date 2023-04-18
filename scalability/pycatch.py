@@ -8,7 +8,6 @@ import os.path
 import sys
 
 
-# @lfr.runtime_scope
 def pycatch(
         nr_workers,
         count,

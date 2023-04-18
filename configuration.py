@@ -1,10 +1,12 @@
 import pathlib
 
 # define number of hourly timesteps to run
-numberOfTimeSteps = 10968
+numberOfTimeSteps = 10  # 10968
 
 # folder with input files (maps, timeseries)
-inputFolder = "inputs"
+### KDJ
+### inputFolder = "inputs"
+inputFolder = "/scratch-shared/kor/pycatch/africa"
 
 # select maps as input parameters and initial values or uniform values over the area
 mapsAsInput = False
@@ -21,12 +23,15 @@ nrOfSamples = 1
 
 # definition for components were all timesteps should be reported
 timeStepsToReportAll = list(range(1, numberOfTimeSteps + 1, 1))
+timeStepsToReportAll = list()
 
 # used for discharge only
 timeStepsToReportRqs = list(range(20, numberOfTimeSteps + 1, 20))
+timeStepsToReportRqs = list()
 
 # definition for components were a subset of timesteps should be reported
 timeStepsToReportSome = list(range(100, numberOfTimeSteps + 1, 100))
+timeStepsToReportSome = list()
 
 # switch to report for locations as small numpy files
 # mainly used for particle filtering
@@ -75,16 +80,30 @@ if with_shading is False:
 #########################
 
 # set clone
+### KDJ
 cloneString = str(pathlib.Path(inputFolder, "mergeClone.map"))
+cloneString = str(pathlib.Path(inputFolder, "elevation.tiff"))
+cloneString = str(pathlib.Path(inputFolder, "elevation-south_africa.tiff"))
+cloneString = str(pathlib.Path(inputFolder, "elevation-oranje_rivier.tiff"))
 
 # digital elevation model (m)
+### KDJ
 dem = str(pathlib.Path(inputFolder, "mergeDem.map"))
+dem = str(pathlib.Path(inputFolder, "elevation.tiff"))
+dem = str(pathlib.Path(inputFolder, "elevation-south_africa.tiff"))
+dem = str(pathlib.Path(inputFolder, "elevation-oranje_rivier.tiff"))
 
 # ldd map
+### KDJ
 lddMap = str(pathlib.Path(inputFolder, "mergeldd.map"))
+lddMap = str(pathlib.Path(inputFolder, "flow_direction.tiff"))
+lddMap = str(pathlib.Path(inputFolder, "flow_direction-south_africa.tiff"))
+lddMap = str(pathlib.Path(inputFolder, "flow_direction-oranje_rivier.tiff"))
 
 # report locations, i.e. outflow points, for instance, at the outlet
-locations = str(pathlib.Path(inputFolder, "mergeOutFlowsNominal.map"))
+### KDJ
+### locations = str(pathlib.Path(inputFolder, "mergeOutFlowsNominal.map"))
+locations = str(pathlib.Path(inputFolder, "not_available_yet.tiff"))
 
 
 #####################

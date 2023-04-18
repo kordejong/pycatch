@@ -16,7 +16,7 @@ pcr, pcrfw = modelling_framework.load("lue")
 
 
 
-### # from pcrasterModules
+# from pcrasterModules
 import datetimePCRasterPython
 import interceptionuptomaxstore
 import surfacestore
@@ -49,7 +49,9 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
       pcrfw.ParticleFilterModel.__init__(self)
 
   def premcloop(self):
-    self.clone = pcr.boolean(cfg.cloneString)
+    ### KDJ
+    ### self.clone = pcr.boolean(cfg.cloneString)
+    self.clone = pcr.defined(cfg.cloneString)
     self.dem = pcr.scalar(cfg.dem)
     self.createInstancesPremcloop()
 
@@ -267,7 +269,8 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
     # interception #
     ################
 
-    self.ldd = cfg.lddMap
+    # KDJ Prevent reading ldd multiple times
+    self.ldd = pcr.readmap(cfg.lddMap)
 
     initialInterceptionStore = pcr.scalar(0.000001)
     leafAreaIndex = pcr.scalar(cfg.leafAreaIndexValue)
@@ -341,7 +344,10 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
     if cfg.mapsAsInput:
       stream = pcr.boolean(cfg.streamValue)
     else:
-      upstreamArea = pcr.accuflux(cfg.lddMap,pcr.cellarea())
+      ### KDJ
+      ### upstreamArea = pcr.accuflux(cfg.lddMap,pcr.cellarea())
+      # KDJ Prevent reading ldd multiple times
+      upstreamArea = pcr.accuthreshold(self.ldd, pcr.cellarea(), 0)[0]
       stream = upstreamArea > 200000.0
 
     theSlope = pcr.slope(self.dem)
@@ -607,14 +613,14 @@ class CatchmentModel(pcrfw.DynamicModel, pcrfw.MonteCarloModel):
       os.remove(filename)
 
 
-def pycatch(partition_shape):
+def pycatch(partition_shape=(2000, 2000)):
     def create_and_run_model(numberOfTimeSteps, nrOfSamples):
       myModel = CatchmentModel()
       dynamicModel = pcrfw.DynamicFramework(myModel, numberOfTimeSteps)
 
       mcModel = pcrfw.MonteCarloFramework(dynamicModel, nrOfSamples)
       mcModel.setForkSamples(True, 10)
-      mcModel.run(rate_limit=10)
+      mcModel.run(rate_limit=2)
 
     # Hack the partition shape in. This is needed by pcr.set_clone.
     pcr.partition_shape = partition_shape

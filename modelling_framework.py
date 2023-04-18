@@ -84,6 +84,7 @@ def load(name):
 
     if name == "lue":
 
+        import numbers
         import lue.framework as lfr
         import lue.pcraster as pcr
         import lue.pcraster.framework as pcrfw
@@ -126,7 +127,10 @@ def load(name):
             values = line.split()[1:]
             lookup_table = {id_ + 1: float(values[id_]) for id_ in range(len(values))}
 
-            return lfr.reclassify(id_expression, lookup_table, dtype=np.float32)
+            if isinstance(id_expression, numbers.Number):
+                return lookup_table[id_expression]
+            else:
+                return lfr.reclassify(id_expression, lookup_table, dtype=np.float32)
 
         pcr.timeinputscalar = timeinputscalar
 
